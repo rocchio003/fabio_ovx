@@ -1,0 +1,48 @@
+# Self-host OmniVix on a VPS, behind Cloudflare WARP.
+#
+# Why WARP: VixSrc, VixCloud and AnimeUnity sit behind Cloudflare which
+# bans most cloud-provider ASNs (Oracle Cloud, Hetzner, OVH, …) with a
+# 403 / "Cloudflare error 1005". Routing all outbound HTTP through WARP
+# (whose egress IPs are whitelisted by Cloudflare) bypasses the ban.
+#
+# Usage:
+#   docker compose -f docker-compose-vps.yml up -d
+# Then add to Stremio:  http://<your-host>:7000/manifest.json
+#
+# Pin a specific OmniVix version by replacing :latest with a tag like
+# :v1.2.0 or :sha-abc1234 (see https://github.com/enrico9034/omnivix/pkgs/container/omnivix).
+
+services:
+  warp:
+    image: caomingjun/warp
+    container_name: warp
+    restart: unless-stopped
+    device_cgroup_rules:
+      - c 10:200 rwm
+    expose:
+      - 1080
+    environment:
+      - WARP_SLEEP=2
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv4.conf.all.src_valid_mark=1
+    volumes:
+      - warp-data:/var/lib/cloudflare-warp
+
+  omnivix:
+    image: ghcr.io/enrico9034/omnivix:latest
+    container_name: omnivix
+    restart: unless-stopped
+    depends_on:
+      - warp
+    environment:
+      - PORT=7000
+      - WARP_PROXY=socks5h://warp:1080
+      # - AU_LANG=both          # ita | sub | both (default: both)
+    ports:
+      - "7000:7000"
+
+volumes:
+  warp-data:

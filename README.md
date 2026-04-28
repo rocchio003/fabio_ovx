@@ -38,6 +38,15 @@ When a new OmniVix version is released, the `:latest` image on ghcr.io is update
 - Manually restart the Space, or
 - Pin to a specific version in the `Dockerfile` (e.g. `:v1.2.0` or `:sha-abc1234`).
 
+## Self-hosting on a VPS (with WARP)
+
+If you'd rather run OmniVix on your own server instead of on Hugging Face, see [`docker-compose-vps.yml`](docker-compose-vps.yml). It spins up two containers — `omnivix` and Cloudflare WARP — so all outbound HTTP is routed through WARP egress IPs (avoids Cloudflare 1005 ASN bans on Oracle / Hetzner / OVH / etc.).
+
+```bash
+docker compose -f docker-compose-vps.yml up -d
+# → http://<your-host>:7000/manifest.json
+```
+
 ---
 
 ## Credits
