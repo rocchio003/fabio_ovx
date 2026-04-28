@@ -1,41 +1,123 @@
-# OmniVix — Hugging Face Space
+# OmniVix su Hugging Face Spaces & VPS self-hosted
 
-Wrapper Docker minimale per deployare [OmniVix](https://github.com/enrico9034/omnivix) su Hugging Face Spaces.
+Questo repo è il companion di deploy per [**OmniVix**](https://github.com/enrico9034/omnivix) — addon Stremio per VixSrc e AnimeUnity.
 
 > 🇬🇧 English version: [README.md](README.md)
 
-Questo repo contiene **solo** un `Dockerfile` di una riga che pulla l'immagine multi-arch pre-buildata da GitHub Container Registry:
+Contiene:
 
-```dockerfile
-FROM ghcr.io/enrico9034/omnivix:latest
-ENV PORT=7860
-EXPOSE 7860
+- un **`Dockerfile`** di una riga che pulla l'immagine pre-buildata [`ghcr.io/enrico9034/omnivix:warp`](https://github.com/enrico9034/omnivix/pkgs/container/omnivix) (OmniVix + Cloudflare WARP integrati, niente privilegi richiesti) — usato da Hugging Face Spaces;
+- due **`docker-compose-*.yml`** pronti per self-hostare su VPS.
+
+---
+
+## 🤗 Deploy su Hugging Face Spaces (gratis, ~5 min)
+
+### 1. Crea lo Space
+
+1. Vai su <https://huggingface.co/new-space>.
+2. Compila:
+   - **Space name** — es. `omnivix` (entra nell'URL)
+   - **License** — a scelta (MIT va bene)
+   - **SDK** — **Docker** → **Blank**
+   - **Hardware** — `CPU basic · 2 vCPU · 16 GB · FREE`
+   - **Visibility** — **Public** (Stremio deve raggiungerlo senza login)
+3. Clicca **Create Space**.
+
+### 2. Carica i due file
+
+Lo Space è ora un repo git vuoto. Aggiungi `Dockerfile` e `README.md` da questo repo.
+
+**Modo più semplice (UI):**
+
+- Sulla pagina dello Space, apri il tab **Files**.
+- Clicca **+ Add file → Upload files**.
+- Trascina `Dockerfile` e `README.md` da questo repo, poi **Commit changes to main**.
+
+**Alternativa (git CLI):**
+
+```bash
+git clone https://huggingface.co/spaces/<TUO_HF_USERNAME>/omnivix
+cp <path-a-questo-repo>/{Dockerfile,README.md} omnivix/
+cd omnivix
+git add . && git commit -m "init" && git push
 ```
 
-Tutto il codice sorgente, il workflow di build e le release vivono nel repo principale.
+(la prima volta git chiede username HF + un write token da <https://huggingface.co/settings/tokens>.)
 
-## Come si usa
+### 3. Aspetta la build
 
-1. Crea uno Space su [Hugging Face](https://huggingface.co/spaces) con SDK = **Docker**.
-2. Punta lo Space a questo repo (Settings → "Repository URL").
-3. HF builda il `Dockerfile`, scarica l'immagine ghcr.io e la avvia sulla porta 7860.
-4. Aggiungi a Stremio: `https://<tuo-space>.hf.space/manifest.json`.
+Apri il tab **Logs**. Vedrai il pull dell'immagine, poi:
 
-## Aggiornamenti
+```
+[warp] First-time WARP registration...
+[warp] Generating WireGuard profile...
+[warp] Starting wireproxy → SOCKS5 on 127.0.0.1:1080
+[warp] Probing tunnel...
+[warp] ✅ Tunnel UP, WARP active
+OmniVix running at http://127.0.0.1:7860
+```
 
-Quando esce una nuova versione di OmniVix, l'immagine `:latest` su ghcr.io viene aggiornata automaticamente dal workflow Actions. Per forzare il pull:
+Tempo totale ~3–5 min. La riga `✅ Tunnel UP` significa che è pronto.
 
-- Restart manuale dello Space, oppure
-- Pin a una versione specifica nel `Dockerfile` (es. `:v1.2.0` o `:sha-abc1234`).
+### 4. Apri lo Space
 
-## Self-hosting su VPS
+Lo Space risiede su:
 
-Sono forniti due file compose. Entrambi instradano il traffico outbound attraverso WARP per bypassare i ban ASN Cloudflare 1005 sugli IP cloud (Oracle / Hetzner / OVH / …).
+```
+https://<TUO_HF_USERNAME>-<spacename>.hf.space/
+```
+
+(es. `omnivix-test` → `<user>-omnivix-test.hf.space`).
+
+La landing page mostra:
+
+- un **badge stato WARP** (dovrebbe essere verde: `WARP active · <paese> · <colo>`),
+- due **bottoni Test** — uno per un anime (`kitsu:244:1` Bleach), uno per un film (`tt27543632`),
+- un form **Debug** per interrogare manualmente qualsiasi `type/id`.
+
+Se il badge è verde e i bottoni Test rispondono ✅, sei a posto.
+
+### 5. Aggiungi a Stremio
+
+Stremio → Addons → Community → incolla l'URL del manifest:
+
+```
+https://<TUO_HF_USERNAME>-<spacename>.hf.space/manifest.json
+```
+
+(oppure clicca **Installa Addon** sulla landing se il tuo browser è su un device con Stremio installato).
+
+### Pin di una versione specifica
+
+Di default il `Dockerfile` segue `:warp`, che si muove con `main`. Per congelare su una release, modifica la prima riga:
+
+```dockerfile
+FROM ghcr.io/enrico9034/omnivix:warp-1.0.0
+```
+
+Poi committa. HF ricostruisce in ~30 s (immagine già in cache).
+
+### Troubleshooting
+
+| Sintomo | Causa | Fix |
+|---|---|---|
+| Space bloccato su **Building** > 10 min | raro outage HF | refresha; se ancora bloccato → **Settings → Factory reboot** |
+| Logs mostrano `Tunnel did not come up in 30s` | Cloudflare ha bloccato `wgcf` da questa region | **Settings → Factory reboot** (ottiene un IP egress HF nuovo); di solito riparte |
+| `Stream not found` in Stremio | Space addormentato | la prima richiesta lo sveglia (~30 s), riprova |
+| Manifest 404 | build ancora in corso o build fallita | guarda il tab **Logs** |
+| Voglio liberare CPU | il free tier HF dorme dopo ~48 h idle | niente da fare; si rialza alla prossima richiesta |
+
+---
+
+## 🖥 Self-hosting su VPS
+
+Due file compose, entrambi instradano il traffico outbound attraverso WARP per bypassare i ban ASN Cloudflare 1005 sugli IP cloud (Oracle / Hetzner / OVH / …).
 
 | File | Container | Capabilities | Quando usarlo |
 |---|---|---|---|
-| [`docker-compose-vps-aio.yml`](docker-compose-vps-aio.yml) | 1 (`omnivix:warp`) | nessuna | setup minimale, host con restrizioni, semplicità a singolo processo |
-| [`docker-compose-vps.yml`](docker-compose-vps.yml) | 2 (`omnivix:latest` + sidecar `caomingjun/warp`) | `NET_ADMIN`, `/dev/net/tun` sul container warp | feature WARP complete (supporto UDP, `warp-cli` ufficiale); più robusto al restart di WARP |
+| [`docker-compose-vps-aio.yml`](docker-compose-vps-aio.yml) | 1 (`omnivix:warp`) | nessuna | setup minimale, host con restrizioni, semplicità |
+| [`docker-compose-vps.yml`](docker-compose-vps.yml) | 2 (`omnivix:latest` + sidecar `caomingjun/warp`) | `NET_ADMIN`, `/dev/net/tun` sul container warp | feature WARP complete (UDP), riconnessioni più robuste |
 
 ```bash
 # All-in-one (un container, nessun privilegio)
@@ -45,7 +127,22 @@ docker compose -f docker-compose-vps-aio.yml up -d
 docker compose -f docker-compose-vps.yml up -d
 ```
 
-Aggiungi a Stremio: `http://<tuo-host>:7000/manifest.json`.
+Aggiungi a Stremio:
+
+```
+http://<tuo-host>:7000/manifest.json
+```
+
+Per fissare una release in entrambi i compose sostituisci `:warp` / `:latest` con `:warp-1.0.0` / `:1.0.0`.
+
+---
+
+## Aggiornamenti
+
+Quando esce una nuova versione di OmniVix, le immagini `:warp` e `:latest` su ghcr.io vengono ricostruite automaticamente da GitHub Actions (multi-arch, ~3 min). Per pullare la nuova immagine:
+
+- **HF Space** — **Settings → Factory reboot** (svuota la cache dei layer e ripulla)
+- **VPS** — `docker compose pull && docker compose up -d`
 
 ---
 
