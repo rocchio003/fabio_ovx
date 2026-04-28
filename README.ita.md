@@ -17,29 +17,29 @@ Contiene:
 
 1. Vai su <https://huggingface.co/new-space>.
 2. Compila:
-   - **Space name** — es. `omnivix` (entra nell'URL)
-   - **License** — a scelta (MIT va bene)
+   - **Space name** — scegli un **nome neutro** (es. `my-stream-helper`, `tv-bridge-1`, le tue iniziali + qualcosa di generico). ⚠️ **NON usare `omnivix`, `vix`, `stream`, `iptv` o parole che richiamano lo streaming** — HF rimuove attivamente gli Space con questi nomi indipendentemente dal codice.
    - **SDK** — **Docker** → **Blank**
    - **Hardware** — `CPU basic · 2 vCPU · 16 GB · FREE`
    - **Visibility** — **Public** (Stremio deve raggiungerlo senza login)
 3. Clicca **Create Space**.
 
-### 2. Carica i due file
+> Salta il campo License — non è necessario per la build.
 
-Lo Space è ora un repo git vuoto. Aggiungi `Dockerfile` e `README.md` da questo repo.
+### 2. Carica il Dockerfile
+
+Lo Space è ora un repo git vuoto. Ti serve solo il `Dockerfile` da questo repo (il `README.md` è opzionale — personalizza solo titolo/emoji della card dello Space).
 
 **Modo più semplice (UI):**
 
-- Sulla pagina dello Space, apri il tab **Files**.
-- Clicca **+ Add file → Upload files**.
-- Trascina `Dockerfile` e `README.md` da questo repo, poi **Commit changes to main**.
+- Sulla pagina dello Space clicca **Contribute → Upload file**.
+- Trascina il `Dockerfile` da questo repo, poi **Commit changes to main**.
 
 **Alternativa (git CLI):**
 
 ```bash
-git clone https://huggingface.co/spaces/<TUO_HF_USERNAME>/omnivix
-cp <path-a-questo-repo>/{Dockerfile,README.md} omnivix/
-cd omnivix
+git clone https://huggingface.co/spaces/<TUO_HF_USERNAME>/<nome-del-tuo-space>
+cp <path-a-questo-repo>/Dockerfile <nome-del-tuo-space>/
+cd <nome-del-tuo-space>
 git add . && git commit -m "init" && git push
 ```
 
@@ -68,7 +68,7 @@ Lo Space risiede su:
 https://<TUO_HF_USERNAME>-<spacename>.hf.space/
 ```
 
-(es. `omnivix-test` → `<user>-omnivix-test.hf.space`).
+(es. se il tuo username è `alice` e lo space è `my-stream-helper`, l'URL è `https://alice-my-stream-helper.hf.space/`).
 
 La landing page mostra:
 

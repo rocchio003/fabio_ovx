@@ -27,29 +27,29 @@ It contains:
 
 1. Go to <https://huggingface.co/new-space>.
 2. Fill in:
-   - **Space name** — e.g. `omnivix` (becomes part of the URL)
-   - **License** — your choice (MIT works)
+   - **Space name** — pick a **neutral name** (e.g. `my-stream-helper`, `tv-bridge-1`, your initials + something generic). ⚠️ **Do NOT use `omnivix`, `vix`, `stream`, `iptv` or other streaming-sounding words** — HF actively removes Spaces with such names regardless of the actual code.
    - **SDK** — **Docker** → **Blank**
    - **Hardware** — `CPU basic · 2 vCPU · 16 GB · FREE`
    - **Visibility** — **Public** (Stremio needs to reach it without login)
 3. Click **Create Space**.
 
-### 2. Upload the two files
+> Skip the License field — not required for the build to work.
 
-The Space is now an empty git repo. Add `Dockerfile` and `README.md` from this repo.
+### 2. Upload the Dockerfile
+
+The Space is now an empty git repo. You only need the `Dockerfile` from this repo (the `README.md` is optional — it just personalizes title/emoji of the Space card).
 
 **Easiest way (UI):**
 
-- On the Space page, open the **Files** tab.
-- Click **+ Add file → Upload files**.
-- Drag `Dockerfile` and `README.md` from this repo, then **Commit changes to main**.
+- On the Space page click **Contribute → Upload file**.
+- Drag the `Dockerfile` from this repo, then **Commit changes to main**.
 
 **Alternative (git CLI):**
 
 ```bash
-git clone https://huggingface.co/spaces/<YOUR_HF_USERNAME>/omnivix
-cp <path-to-this-repo>/{Dockerfile,README.md} omnivix/
-cd omnivix
+git clone https://huggingface.co/spaces/<YOUR_HF_USERNAME>/<your-space-name>
+cp <path-to-this-repo>/Dockerfile <your-space-name>/
+cd <your-space-name>
 git add . && git commit -m "init" && git push
 ```
 
@@ -78,7 +78,7 @@ Your Space lives at:
 https://<YOUR_HF_USERNAME>-<spacename>.hf.space/
 ```
 
-(replace dashes — e.g. `omnivix-test` → `<user>-omnivix-test.hf.space`).
+(e.g. if your username is `alice` and the space is `my-stream-helper`, the URL is `https://alice-my-stream-helper.hf.space/`).
 
 The landing page shows:
 
